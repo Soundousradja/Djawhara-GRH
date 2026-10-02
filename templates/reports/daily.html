@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Rapport journalier — Djawhara GRH{% endblock %}
+{% block page_title %}Rapport journalier{% endblock %}
+{% block page_subtitle %}{{ selected_date|date:"l d F Y" }}{% endblock %}
+{% block topbar_actions %}
+  <a href="?date={{ selected_date|date:'Y-m-d' }}&export=csv" class="btn btn-outline">⬇️ Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <input class="form-control" type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    <button class="btn btn-outline" type="submit">Afficher</button>
+  </form>
+
+  <div class="grid grid-3" style="margin-bottom:18px;">
+    <div class="stat-card"><div class="stat-icon">🕒</div><div><div class="stat-value">{{ late|length }}</div><div class="stat-label">Retards</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🚫</div><div><div class="stat-value">{{ unjustified|length }}</div><div class="stat-label">Absences injustifiées</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-value">{{ records|length }}</div><div class="stat-label">Pointages enregistrés</div></div></div>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>Employé</th><th>Atelier</th><th>Statut</th><th>Retard (min)</th><th>Remarque</th></tr></thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.employee }}</td><td>{{ r.workshop|default:"—" }}</td>
+        <td>{% if r.is_problem %}<span class="badge badge-danger">{{ r.get_status_display }}</span>{% else %}<span class="badge badge-success">{{ r.get_status_display }}</span>{% endif %}</td>
+        <td>{{ r.minutes_late }}</td><td>{{ r.note|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Aucun pointage pour cette date.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

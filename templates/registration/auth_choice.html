@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choix d'accès — Djawhara GRH</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page">
+<div class="login-wrap">
+  <main class="login-card" aria-labelledby="choice-title">
+    <div class="login-brand">
+      <div class="brand-badge">DJ</div>
+      <span>Djawhara <small>GRH</small></span>
+    </div>
+
+    <div class="login-heading">
+      <p class="login-kicker">ACCÈS</p>
+      <h1 id="choice-title">Bienvenue</h1>
+    </div>
+
+    <p class="sub">Choisissez ce que vous souhaitez faire pour accéder à votre espace.</p>
+
+    <div style="display:grid; gap:14px; margin-top:20px;">
+      <a href="{% url 'login' %}" class="btn btn-primary" style="width:100%;">Se connecter</a>
+      <a href="{% url 'register' %}" class="btn btn-outline" style="width:100%;">Créer un compte (responsable)</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

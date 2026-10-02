@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Rapports — Djawhara GRH{% endblock %}
+{% block page_title %}Rapports{% endblock %}
+{% block page_subtitle %}Rapports journaliers, hebdomadaires et mensuels pour la direction{% endblock %}
+
+{% block content %}
+<div class="grid grid-3">
+  <a class="card" href="{% url 'daily_report' %}">
+    <div class="stat-icon" style="margin-bottom:10px;">📅</div>
+    <h3>Rapport journalier</h3>
+    <p style="color:var(--text-muted); font-size:13px;">Présence, absences et retards du jour par atelier.</p>
+  </a>
+  <a class="card" href="{% url 'weekly_report' %}">
+    <div class="stat-icon" style="margin-bottom:10px;">🗓️</div>
+    <h3>Rapport hebdomadaire</h3>
+    <p style="color:var(--text-muted); font-size:13px;">Employés les plus absents/en retard, comparaison entre ateliers.</p>
+  </a>
+  <a class="card" href="{% url 'monthly_report' %}">
+    <div class="stat-icon" style="margin-bottom:10px;">📆</div>
+    <h3>Rapport mensuel</h3>
+    <p style="color:var(--text-muted); font-size:13px;">Éléments de paie du mois, contrats se terminant, effectifs.</p>
+  </a>
+</div>
+{% endblock %}

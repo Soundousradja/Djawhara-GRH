@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Élément de paie — Djawhara GRH{% endblock %}
+{% block page_title %}{% if payroll %}Modifier l'élément de paie{% else %}Nouvel élément de paie{% endif %}{% endblock %}
+{% block page_subtitle %}Jours travaillés, absences, primes et retenues du mois{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:900px;">
+  <form method="post">
+    {% csrf_token %}
+    <h3>Informations générales</h3>
+    <div class="form-grid">
+      {{ form.as_p }}
+    </div>
+
+    <h3 style="margin-top:20px;">➕ Primes</h3>
+    {{ bonus_fs.management_form }}
+    <table class="data-table">
+      <thead><tr><th>Libellé</th><th>Montant</th><th>Supprimer</th></tr></thead>
+      <tbody>
+        {% for f in bonus_fs %}
+        <tr>
+          <td>{{ f.label }}{{ f.id }}</td>
+          <td>{{ f.amount }}</td>
+          <td>{% if f.DELETE %}{{ f.DELETE }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:20px;">➖ Retenues</h3>
+    {{ deduction_fs.management_form }}
+    <table class="data-table">
+      <thead><tr><th>Libellé</th><th>Montant</th><th>Supprimer</th></tr></thead>
+      <tbody>
+        {% for f in deduction_fs %}
+        <tr>
+          <td>{{ f.label }}{{ f.id }}</td>
+          <td>{{ f.amount }}</td>
+          <td>{% if f.DELETE %}{{ f.DELETE }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a href="{% url 'payroll_list' %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

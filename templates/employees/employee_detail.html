@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}{{ employee.full_name }} — Djawhara GRH{% endblock %}
+{% block page_title %}{{ employee.full_name }}{% endblock %}
+{% block page_subtitle %}{{ employee.position|default:"Poste non renseigné" }} — {{ employee.workshop|default:"Sans atelier" }}{% endblock %}
+{% block topbar_actions %}
+  {% if user_profile.can_manage_employees %}
+    <a href="{% url 'employee_update' employee.pk %}" class="btn btn-outline">✏️ Modifier</a>
+    <a href="{% url 'contract_create' %}?employee={{ employee.pk }}" class="btn btn-primary">📄 Nouveau contrat</a>
+    <form method="post" action="{% url 'employee_delete' employee.pk %}" style="display:inline;" onsubmit="return confirm('Supprimer cet employé ? Cette action supprimera aussi ses contrats, paies, pointages et documents.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline">Supprimer</button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Informations personnelles</h3>
+    <table class="data-table">
+      <tr><th>Date de naissance</th><td>{{ employee.birth_date|date:"d/m/Y"|default:"—" }}</td></tr>
+      <tr><th>Lieu de naissance</th><td>{{ employee.birth_place|default:"—" }}</td></tr>
+      <tr><th>N° carte d'identité</th><td>{{ employee.national_id|default:"—" }}</td></tr>
+      <tr><th>Adresse</th><td>{{ employee.address|default:"—" }}</td></tr>
+      <tr><th>Téléphone</th><td>{{ employee.phone|default:"—" }}</td></tr>
+      <tr><th>Situation familiale</th><td>{{ employee.get_family_status_display|default:"—" }}</td></tr>
+      <tr><th>N° CNAS</th><td>{{ employee.cnas_number|default:"—" }}</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Informations professionnelles</h3>
+    <table class="data-table">
+      <tr><th>Date d'embauche</th><td>{{ employee.hire_date|date:"d/m/Y"|default:"—" }}</td></tr>
+      <tr><th>Poste</th><td>{{ employee.position|default:"—" }}</td></tr>
+      <tr><th>Atelier</th><td>{{ employee.workshop|default:"—" }}</td></tr>
+      <tr><th>Responsable direct</th><td>{{ employee.responsible|default:"—" }}</td></tr>
+      <tr><th>Statut</th><td>
+        {% if employee.status == 'ACTIF' %}<span class="badge badge-success">Actif</span>
+        {% elif employee.status == 'SUSPENDU' %}<span class="badge badge-warning">Suspendu</span>
+        {% else %}<span class="badge badge-muted">Arrêté</span>{% endif %}
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>📄 Contrats</h3></div>
+  <table class="data-table">
+    <thead><tr><th>Type</th><th>Début</th><th>Fin</th><th>Salaire de base</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for c in contracts %}
+      <tr>
+        <td>{{ c.get_contract_type_display }}</td>
+        <td>{{ c.start_date|date:"d/m/Y" }}</td>
+        <td>{{ c.end_date|date:"d/m/Y"|default:"—" }}</td>
+        <td>{{ c.base_salary }} DA</td>
+        <td>
+          {% if c.is_ending_soon %}<span class="badge badge-warning">Fin proche</span>
+          {% elif c.status == 'ACTIF' %}<span class="badge badge-success">Actif</span>
+          {% else %}<span class="badge badge-muted">{{ c.get_status_display }}</span>{% endif %}
+        </td>
+        <td>{% if user_profile.can_manage_contracts %}<div style="display:flex; align-items:center; gap:6px; white-space:nowrap;"><a href="{% url 'contract_update' c.pk %}" class="btn btn-outline btn-sm">Modifier</a><form method="post" action="{% url 'contract_delete' c.pk %}" style="display:inline; margin:0;" onsubmit="return confirm('Supprimer ce contrat ?');">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">Supprimer</button></form></div>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Aucun contrat enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h3>🕒 Derniers pointages</h3></div>
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Statut</th><th>Remarque</th></tr></thead>
+      <tbody>
+        {% for r in attendance_records %}
+        <tr><td>{{ r.date|date:"d/m/Y" }}</td><td>{{ r.get_status_display }}</td><td>{{ r.note|default:"—" }}</td></tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Aucun pointage.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>📁 Documents</h3></div>
+    <table class="data-table">
+      <thead><tr><th>Type</th><th>Fichier</th></tr></thead>
+      <tbody>
+        {% for d in documents %}
+        <tr><td>{{ d.get_doc_type_display }}</td><td><a href="{{ d.file.url }}" target="_blank">Ouvrir</a></td></tr>
+        {% empty %}
+        <tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Aucun document.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if user_profile.can_manage_employees %}
+    <form method="post" action="{% url 'employee_add_document' employee.pk %}" enctype="multipart/form-data" style="margin-top:14px;">
+      {% csrf_token %}
+      {{ doc_form.as_p }}
+      <button class="btn btn-primary btn-sm" type="submit">Ajouter le document</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

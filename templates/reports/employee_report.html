@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Rapport employé — Djawhara GRH{% endblock %}
+{% block page_title %}Rapport — {{ employee }}{% endblock %}
+{% block page_subtitle %}Historique complet de l'employé{% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Pointages récents</h3>
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for r in records %}<tr><td>{{ r.date|date:"d/m/Y" }}</td><td>{{ r.get_status_display }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Contrats</h3>
+    <table class="data-table">
+      <thead><tr><th>Type</th><th>Début</th><th>Fin</th></tr></thead>
+      <tbody>
+        {% for c in contracts %}<tr><td>{{ c.get_contract_type_display }}</td><td>{{ c.start_date|date:"d/m/Y" }}</td><td>{{ c.end_date|date:"d/m/Y"|default:"—" }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Paie</h3>
+  <table class="data-table">
+    <thead><tr><th>Mois</th><th>Net à payer</th></tr></thead>
+    <tbody>
+      {% for p in payrolls %}<tr><td>{{ p.get_month_display }} {{ p.year }}</td><td>{{ p.net_pay }} DA</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

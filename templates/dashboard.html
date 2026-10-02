@@ -1,0 +1,2327 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Tableau de bord — Djawhara GRH
+{% endblock %}
+
+{% block page_title %}
+    GRH — Gestion des Ressources Humaines
+{% endblock %}
+
+{% block page_subtitle %}
+    Vue d'ensemble de l'entreprise · {{ today|date:"d/m/Y" }}
+{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{% url 'attendance_daily' %}" class="dashboard-btn-primary">
+        🕒 Pointer aujourd'hui
+    </a>
+    {% if user_profile and user_profile.is_rh or user_profile.is_dg or user_profile.is_gerant %}
+    <a href="{% url 'register' %}" class="btn btn-primary">
+        ➕ Créer un utilisateur
+    </a>
+    {% endif %}
+    <a href="{% url 'backup_database' %}" class="btn btn-outline">
+        ⬇️ Sauvegarder les données
+    </a>
+    <a href="{% url 'restore_database' %}" class="btn btn-primary">
+        ⬆️ Restaurer
+    </a>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+
+
+.dashboard-page,
+.dashboard-page * {
+    box-sizing: border-box;
+}
+
+.dashboard-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-page > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+
+
+
+.dashboard-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 10px 16px;
+
+    border-radius: 10px;
+
+    background: #1769e0;
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition: .2s ease;
+}
+
+.dashboard-btn-primary:hover {
+    background: #1257bd;
+    transform: translateY(-1px);
+}
+
+
+
+
+.dashboard-kpi-grid {
+    display: grid;
+
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    gap: 16px;
+
+    width: 100%;
+}
+
+.dashboard-kpi-card {
+    background: #ffffff;
+
+    border: 1px solid #e8edf7;
+    border-radius: 18px;
+
+    padding: 16px 14px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+    width: 100%;
+
+    overflow: hidden;
+
+    box-shadow: 0 4px 18px rgba(20, 45, 90, 0.06);
+
+    transition: all .2s ease;
+}
+
+.dashboard-kpi-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 25px rgba(20, 45, 90, 0.10);
+}
+
+.dashboard-kpi-card > div:last-child {
+    min-width: 0;
+    overflow: hidden;
+}
+
+
+
+
+.dashboard-kpi-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+
+    border-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+}
+
+.dashboard-kpi-blue {
+    background: #376ec6;
+}
+
+.dashboard-kpi-green {
+    background: #02dd89;
+}
+
+.dashboard-kpi-red {
+    background: #e30f2b;
+}
+
+.dashboard-kpi-orange {
+    background: #fac156;
+}
+
+.dashboard-kpi-purple {
+    background: #8564da;
+}
+
+.dashboard-kpi-title {
+    color: #7a8499;
+
+    font-size: 11px;
+
+    margin-bottom: 5px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.dashboard-kpi-number {
+    color: #101b41;
+
+    font-size: 25px;
+
+    font-weight: 750;
+
+    line-height: 1;
+}
+
+.dashboard-kpi-sub {
+    margin-top: 6px;
+
+    font-size: 10px;
+
+    color: #64748b;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+
+
+.dashboard-grid-main {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+
+    width: 100%;
+}
+
+.dashboard-grid-three {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.1fr)
+        minmax(0, 1.8fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+
+    width: 100%;
+}
+
+.dashboard-grid-two {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+
+    width: 100%;
+}
+
+.dashboard-grid-main > *,
+.dashboard-grid-three > *,
+.dashboard-grid-two > * {
+    min-width: 0;
+}
+
+
+
+
+.dashboard-card {
+    background: #ffffff;
+
+    border: 1px solid #e7ecf5;
+
+    border-radius: 20px;
+
+    padding: 22px;
+
+    width: 100%;
+    min-width: 0;
+
+    box-shadow:
+        0 4px 20px rgba(20, 45, 90, .055);
+}
+
+.dashboard-card-head {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+.dashboard-card-title {
+    margin: 0;
+
+    color: #101b41;
+
+    font-size: 16px;
+
+    font-weight: 700;
+}
+
+.dashboard-card-link {
+    color: #1769e0;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.dashboard-card-link:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   GRAPHIQUE
+   ========================================================= */
+
+.dashboard-chart-container {
+    height: 280px;
+
+    width: 100%;
+
+    position: relative;
+}
+
+.dashboard-chart-container canvas {
+    max-width: 100%;
+}
+
+
+
+
+.dashboard-donut-container {
+    height: 210px;
+
+    width: 100%;
+
+    position: relative;
+
+    display: flex;
+
+    justify-content: center;
+}
+
+.dashboard-donut-container canvas {
+    max-width: 100%;
+}
+
+.dashboard-donut-info {
+    text-align: center;
+
+    margin-top: -5px;
+}
+
+.dashboard-donut-percent {
+    font-size: 28px;
+
+    font-weight: 750;
+
+    color: #101b41;
+}
+
+.dashboard-donut-label {
+    font-size: 12px;
+
+    color: #7a8499;
+}
+
+
+
+.dashboard-legend {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 11px;
+
+    margin-top: 15px;
+}
+
+.dashboard-legend-row {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    font-size: 12px;
+}
+
+.dashboard-legend-left {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color: #58647b;
+}
+
+.dashboard-legend-dot {
+    width: 9px;
+    height: 9px;
+
+    min-width: 9px;
+
+    border-radius: 50%;
+}
+
+.dashboard-legend-value {
+    font-weight: 700;
+
+    color: #101b41;
+}
+
+
+
+.dashboard-alerts-card {
+    background:
+        linear-gradient(
+            145deg,
+            #fff8f9,
+            #ffffff
+        );
+
+    border-color: #f3dce1;
+}
+
+.dashboard-alerts-container {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 11px;
+}
+
+.dashboard-alert {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 13px 14px;
+
+    border-radius: 13px;
+
+    border: 1px solid transparent;
+
+    transition: .2s ease;
+
+    min-width: 0;
+}
+
+.dashboard-alert:hover {
+    transform: translateX(2px);
+}
+
+.dashboard-alert-clickable {
+    cursor: pointer;
+}
+
+.dashboard-alert-icon {
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+
+    border-radius: 11px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-size: 17px;
+}
+
+.dashboard-alert-content {
+    flex: 1;
+
+    min-width: 0;
+}
+
+.dashboard-alert-title {
+    font-size: 12px;
+
+    font-weight: 750;
+
+    margin-bottom: 3px;
+}
+
+.dashboard-alert-message {
+    font-size: 11px;
+
+    line-height: 1.45;
+
+    overflow-wrap: anywhere;
+}
+
+.dashboard-alert-arrow {
+    font-size: 22px;
+
+    color: #9aa3b4;
+
+    line-height: 1;
+}
+
+
+/* Warning */
+
+.dashboard-alert-warning {
+    background: #fff8e9;
+
+    border-color: #f8e4b6;
+}
+
+.dashboard-alert-warning .dashboard-alert-icon {
+    background: #ffedc2;
+}
+
+.dashboard-alert-warning .dashboard-alert-title {
+    color: #a86c00;
+}
+
+.dashboard-alert-warning .dashboard-alert-message {
+    color: #806a45;
+}
+
+
+/* Danger */
+
+.dashboard-alert-danger {
+    background: #fff0f2;
+
+    border-color: #ffd9df;
+}
+
+.dashboard-alert-danger .dashboard-alert-icon {
+    background: #ffe0e5;
+}
+
+.dashboard-alert-danger .dashboard-alert-title {
+    color: #d93651;
+}
+
+.dashboard-alert-danger .dashboard-alert-message {
+    color: #87505b;
+}
+
+
+/* Info */
+
+.dashboard-alert-info {
+    background: #edf5ff;
+
+    border-color: #d9e8ff;
+}
+
+.dashboard-alert-info .dashboard-alert-icon {
+    background: #dceaff;
+}
+
+.dashboard-alert-info .dashboard-alert-title {
+    color: #1769e0;
+}
+
+.dashboard-alert-info .dashboard-alert-message {
+    color: #536b8f;
+}
+
+
+/* Aucune alerte */
+
+.dashboard-no-alert {
+    padding: 25px 10px;
+
+    text-align: center;
+
+    color: #15945a;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+
+
+.dashboard-workshop-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+.dashboard-workshop-row {
+    display: grid;
+
+    grid-template-columns:
+        120px
+        minmax(0, 1fr)
+        50px;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.dashboard-workshop-name {
+    font-size: 12px;
+
+    color: #3d4860;
+
+    font-weight: 600;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.dashboard-progress {
+    height: 8px;
+
+    border-radius: 10px;
+
+    background: #edf1f7;
+
+    overflow: hidden;
+}
+
+.dashboard-progress-bar {
+    height: 100%;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1769e0,
+            #5b9cff
+        );
+}
+
+.dashboard-workshop-percent {
+    text-align: right;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    color: #263252;
+}
+
+
+
+
+.dashboard-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+.dashboard-table {
+    width: 100%;
+
+    max-width: 100%;
+
+    border-collapse: collapse;
+}
+
+.dashboard-table th {
+    text-align: left;
+
+    padding: 10px;
+
+    font-size: 11px;
+
+    color: #8993a7;
+
+    font-weight: 600;
+
+    background: #f7f9fc;
+}
+
+.dashboard-table td {
+    padding: 11px 10px;
+
+    border-bottom: 1px solid #edf0f5;
+
+    font-size: 12px;
+
+    color: #35405b;
+}
+
+.dashboard-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.dashboard-employee-name {
+    font-weight: 650;
+
+    color: #172142;
+}
+
+
+
+.dashboard-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 5px 9px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.dashboard-status-danger {
+    background: #ffe8ec;
+
+    color: #d93651;
+}
+
+.dashboard-status-warning {
+    background: #fff3da;
+
+    color: #b57600;
+}
+
+.dashboard-status-success {
+    background: #e6f8ef;
+
+    color: #15945a;
+}
+
+
+
+
+.dashboard-contract-layout {
+    display: flex;
+
+    align-items: center;
+
+    gap: 20px;
+
+    min-width: 0;
+}
+
+.dashboard-contract-chart {
+    width: 150px;
+    height: 150px;
+
+    min-width: 150px;
+
+    position: relative;
+}
+
+.dashboard-contract-chart canvas {
+    max-width: 100%;
+
+    max-height: 100%;
+}
+
+.dashboard-contract-legend {
+    flex: 1;
+
+    min-width: 0;
+}
+
+.dashboard-contract-line {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 7px 0;
+
+    font-size: 12px;
+}
+
+.dashboard-contract-left {
+    display: flex;
+
+    gap: 8px;
+
+    align-items: center;
+
+    min-width: 0;
+}
+
+.dashboard-contract-number {
+    font-weight: 700;
+
+    color: #101b41;
+}
+
+.dashboard-contract-alert {
+    margin-top: 15px;
+
+    background: #fff0f2;
+
+    border-radius: 12px;
+
+    padding: 11px;
+
+    color: #d93651;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+
+
+
+.dashboard-recent-employee {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #edf0f5;
+
+    min-width: 0;
+}
+
+.dashboard-recent-employee:last-child {
+    border-bottom: 0;
+}
+
+.dashboard-employee-avatar {
+    width: 34px;
+    height: 34px;
+
+    min-width: 34px;
+
+    border-radius: 50%;
+
+    background: #eaf2ff;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #1769e0;
+}
+
+.dashboard-recent-info {
+    flex: 1;
+
+    min-width: 0;
+}
+
+.dashboard-recent-name {
+    font-size: 12px;
+
+    font-weight: 650;
+
+    color: #1a2445;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.dashboard-recent-workshop {
+    color: #8993a7;
+
+    font-size: 10px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.dashboard-recent-date {
+    color: #8993a7;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   ETATS VIDES
+   ========================================================= */
+
+.dashboard-empty {
+    color: #8993a7;
+
+    font-size: 12px;
+}
+
+.dashboard-success-message {
+    color: #15945a;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1400px) {
+
+    .dashboard-grid-three {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1.5fr);
+    }
+
+    .dashboard-grid-three > .dashboard-card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+
+@media (max-width: 1100px) {
+
+    .dashboard-grid-main {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-grid-two {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-payroll-card {
+        flex-wrap: wrap;
+    }
+
+    .dashboard-payroll-details {
+        width: 100%;
+
+        flex-basis: 100%;
+    }
+}
+
+
+@media (max-width: 850px) {
+
+    .dashboard-grid-three {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-grid-three > .dashboard-card:last-child {
+        grid-column: auto;
+    }
+
+    .dashboard-contract-layout {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .dashboard-card {
+        padding: 16px;
+
+        border-radius: 16px;
+    }
+
+    .dashboard-card-head {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 8px;
+    }
+
+    .dashboard-kpi-card {
+        padding: 12px 8px;
+
+        gap: 7px;
+    }
+
+    .dashboard-kpi-icon {
+        width: 40px;
+        height: 40px;
+
+        min-width: 40px;
+
+        font-size: 18px;
+    }
+
+    .dashboard-kpi-title {
+        font-size: 9px;
+    }
+
+    .dashboard-kpi-number {
+        font-size: 20px;
+    }
+
+    .dashboard-kpi-sub {
+        font-size: 8px;
+    }
+
+    .dashboard-workshop-row {
+        grid-template-columns:
+            90px
+            minmax(0, 1fr)
+            45px;
+    }
+}
+
+
+@media (max-width: 500px) {
+
+    .dashboard-page {
+        gap: 14px;
+    }
+
+    .dashboard-kpi-grid,
+    .dashboard-grid-main,
+    .dashboard-grid-three,
+    .dashboard-grid-two {
+        gap: 8px;
+    }
+
+    .dashboard-kpi-card {
+        gap: 5px;
+
+        padding: 8px 5px;
+    }
+
+    .dashboard-kpi-icon {
+        width: 34px;
+        height: 34px;
+
+        min-width: 34px;
+
+        font-size: 15px;
+
+        border-radius: 10px;
+    }
+
+    .dashboard-kpi-title {
+        font-size: 8px;
+    }
+
+    .dashboard-kpi-number {
+        font-size: 18px;
+    }
+
+    .dashboard-kpi-sub {
+        font-size: 7px;
+    }
+
+    .dashboard-chart-container {
+        height: 240px;
+    }
+
+    .dashboard-contract-chart {
+        width: 130px;
+        height: 130px;
+
+        min-width: 130px;
+    }
+
+    .dashboard-table {
+        min-width: 600px;
+    }
+}
+
+</style>
+
+
+<div class="dashboard-page">
+
+
+    <!-- =====================================================
+         1. LES 5 KPI
+         ===================================================== -->
+
+    <div class="dashboard-kpi-grid">
+
+
+        <!-- KPI 1 -->
+
+        <div class="dashboard-kpi-card">
+
+            <div class="dashboard-kpi-icon dashboard-kpi-blue">
+                👥
+            </div>
+
+            <div>
+
+                <div class="dashboard-kpi-title">
+                    Employés actifs
+                </div>
+
+                <div class="dashboard-kpi-number">
+                    {{ total_employees }}
+                </div>
+
+                <div class="dashboard-kpi-sub">
+                    Effectif actuel
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- KPI 2 -->
+
+        <div class="dashboard-kpi-card">
+
+            <div class="dashboard-kpi-icon dashboard-kpi-green">
+                ✓
+            </div>
+
+            <div>
+
+                <div class="dashboard-kpi-title">
+                    Présents aujourd'hui
+                </div>
+
+                <div class="dashboard-kpi-number">
+                    {{ today_counts.present }}
+                </div>
+
+                <div class="dashboard-kpi-sub">
+                    {{ today_counts.present }} / {{ total_employees }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- KPI 3 -->
+
+        <div class="dashboard-kpi-card">
+
+            <div class="dashboard-kpi-icon dashboard-kpi-red">
+                ✕
+            </div>
+
+            <div>
+
+                <div class="dashboard-kpi-title">
+                    Absents aujourd'hui
+                </div>
+
+                <div class="dashboard-kpi-number">
+                    {{ today_counts.absent }}
+                </div>
+
+                <div class="dashboard-kpi-sub">
+                    Absences enregistrées
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- KPI 4 -->
+
+        <div class="dashboard-kpi-card">
+
+            <div class="dashboard-kpi-icon dashboard-kpi-orange">
+                ◷
+            </div>
+
+            <div>
+
+                <div class="dashboard-kpi-title">
+                    Retards aujourd'hui
+                </div>
+
+                <div class="dashboard-kpi-number">
+                    {{ today_counts.late }}
+                </div>
+
+                <div class="dashboard-kpi-sub">
+                    À surveiller
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- KPI 5 -->
+
+        <div class="dashboard-kpi-card">
+
+            <div class="dashboard-kpi-icon dashboard-kpi-purple">
+                🏭
+            </div>
+
+            <div>
+
+                <div class="dashboard-kpi-title">
+                    Ateliers / Services
+                </div>
+
+                <div class="dashboard-kpi-number">
+                    {{ total_workshops }}
+                </div>
+
+                <div class="dashboard-kpi-sub">
+                    Unités actives
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         2. ALERTES
+         ===================================================== -->
+<div class="dashboard-card dashboard-alerts-card">
+
+    <div class="dashboard-card-head">
+        <h3 class="dashboard-card-title">
+            🔔 Alertes
+        </h3>
+    </div>
+
+    <div class="dashboard-alerts-container">
+
+        {% for alert in alerts %}
+
+            {% if alert.title == "Dossiers incomplets" %}
+
+                <a href="{% url 'incomplete_files' %}"
+                   class="dashboard-alert dashboard-alert-{{ alert.type }}"
+                   style="text-decoration:none;color:inherit;">
+
+            {% elif alert.title == "Contrats bientôt expirés" %}
+
+                   <a href="{% url 'contract_list' %}"
+                   class="dashboard-alert dashboard-alert-{{ alert.type }}"
+                   style="text-decoration:none;color:inherit;">
+
+            {% elif alert.title == "Employés en retard" %}
+
+                    <a href="{% url 'attendance_daily' %}"
+                    class="dashboard-alert dashboard-alert-{{ alert.type }}"
+                    style="text-decoration:none;color:inherit;">
+
+            {% elif alert.title == "Absences non justifiées" %}
+
+                    <a href="{% url 'attendance_daily' %}"
+                    class="dashboard-alert dashboard-alert-{{ alert.type }}"
+                    style="text-decoration:none;color:inherit;">
+
+            {% else %}
+
+                <a href="#"
+                   class="dashboard-alert dashboard-alert-{{ alert.type }}"
+                   style="text-decoration:none;color:inherit;">
+
+            {% endif %}
+
+                <div class="dashboard-alert-icon">
+
+                    {% if alert.type == 'warning' %}
+                        📄
+
+                    {% elif alert.type == 'danger' %}
+                        ⚠️
+
+                    {% elif alert.type == 'info' %}
+                        🕒
+
+                    {% else %}
+                        🔔
+                    {% endif %}
+
+                </div>
+
+                <div class="dashboard-alert-content">
+
+                    <div class="dashboard-alert-title">
+                        {{ alert.title }}
+                    </div>
+
+                    <div class="dashboard-alert-message">
+                        {{ alert.message }}
+                    </div>
+
+                </div>
+
+                <div class="dashboard-alert-arrow">
+                    ›
+                </div>
+
+            </a>
+
+        {% empty %}
+
+            <div class="dashboard-no-alert">
+                ✓ Aucune alerte importante aujourd'hui
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+    <!-- =====================================================
+         3. GRAPHIQUE + TAUX DE PRESENCE
+         ===================================================== -->
+
+    <div class="dashboard-grid-main">
+
+
+        <!-- PRESENCE SEMAINE -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-head">
+
+                <h3 class="dashboard-card-title">
+                    Présence / Absence — cette semaine
+                </h3>
+
+                <a href="{% url 'attendance_history' %}"
+                   class="dashboard-card-link">
+                    Voir historique →
+                </a>
+
+            </div>
+
+            <div class="dashboard-chart-container">
+
+                <canvas id="weekChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- TAUX DE PRESENCE -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-head">
+
+                <h3 class="dashboard-card-title">
+                    Taux de présence
+                </h3>
+
+            </div>
+
+
+            <div class="dashboard-donut-container">
+
+                <canvas id="todayDonut"></canvas>
+
+            </div>
+
+
+            <div class="dashboard-donut-info">
+
+                <div class="dashboard-donut-percent">
+                    {{ attendance_rate }}%
+                </div>
+
+                <div class="dashboard-donut-label">
+                    Présents aujourd'hui
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-legend">
+
+
+                <div class="dashboard-legend-row">
+
+                    <div class="dashboard-legend-left">
+
+                        <span
+                            class="dashboard-legend-dot"
+                            style="background:#1769e0;">
+                        </span>
+
+                        Présents
+
+                    </div>
+
+                    <span class="dashboard-legend-value">
+                        {{ today_counts.present }}
+                    </span>
+
+                </div>
+
+
+                <div class="dashboard-legend-row">
+
+                    <div class="dashboard-legend-left">
+
+                        <span
+                            class="dashboard-legend-dot"
+                            style="background:#df3e55;">
+                        </span>
+
+                        Absents
+
+                    </div>
+
+                    <span class="dashboard-legend-value">
+                        {{ today_counts.absent }}
+                    </span>
+
+                </div>
+
+
+                <div class="dashboard-legend-row">
+
+                    <div class="dashboard-legend-left">
+
+                        <span
+                            class="dashboard-legend-dot"
+                            style="background:#e2a333;">
+                        </span>
+
+                        Retards
+
+                    </div>
+
+                    <span class="dashboard-legend-value">
+                        {{ today_counts.late }}
+                    </span>
+
+                </div>
+
+
+                <div class="dashboard-legend-row">
+
+                    <div class="dashboard-legend-left">
+
+                        <span
+                            class="dashboard-legend-dot"
+                            style="background:#dfe4ee;">
+                        </span>
+
+                        Non pointés
+
+                    </div>
+
+                    <span class="dashboard-legend-value">
+                        {{ today_counts.not_recorded }}
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         4. ATELIERS + PROBLEMES + CONTRATS
+         ===================================================== -->
+
+    <div class="dashboard-grid-three">
+
+
+        <!-- PRESENCE PAR ATELIER -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-head">
+
+                <h3 class="dashboard-card-title">
+                    Présence par atelier
+                </h3>
+
+            </div>
+
+
+            <div class="dashboard-workshop-list">
+
+                {% for workshop in workshop_attendance %}
+
+                    <div class="dashboard-workshop-row">
+
+                        <div class="dashboard-workshop-name">
+                            {{ workshop.name }}
+                        </div>
+
+                        <div class="dashboard-progress">
+
+                            <div
+                                class="dashboard-progress-bar"
+                                style="width:{{ workshop.rate }}%;">
+                            </div>
+
+                        </div>
+
+                        <div class="dashboard-workshop-percent">
+                            {{ workshop.rate }}%
+                        </div>
+
+                    </div>
+
+                {% empty %}
+
+                    <p class="dashboard-empty">
+                        Aucune donnée disponible.
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <!-- EMPLOYES AVEC PROBLEMES -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-head">
+
+                <h3 class="dashboard-card-title">
+                    Employés avec problèmes de présence
+                </h3>
+
+                <a href="{% url 'attendance_history' %}"
+                   class="dashboard-card-link">
+                    Voir tout →
+                </a>
+
+            </div>
+
+
+            <div class="dashboard-table-wrapper">
+
+                <table class="dashboard-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Employé
+                            </th>
+
+                            <th>
+                                Atelier
+                            </th>
+
+                            <th>
+                                Absences
+                            </th>
+
+                            <th>
+                                Retards
+                            </th>
+
+                            <th>
+                                Statut
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for employee in attendance_issues %}
+
+                            <tr>
+
+                                <td class="dashboard-employee-name">
+                                    {{ employee.employee }}
+                                </td>
+
+                                <td>
+                                    {{ employee.workshop|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ employee.absences }}
+                                </td>
+
+                                <td>
+                                    {{ employee.lates }}
+                                </td>
+
+                                <td>
+
+                                    {% if employee.absences >= 5 or employee.lates >= 5 %}
+
+                                        <span class="dashboard-badge dashboard-status-danger">
+                                            ⚠ En alerte
+                                        </span>
+
+                                    {% elif employee.absences >= 3 or employee.lates >= 3 %}
+
+                                        <span class="dashboard-badge dashboard-status-warning">
+                                            Monitoring
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="dashboard-badge dashboard-status-success">
+                                            Bon
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td
+                                    colspan="5"
+                                    style="text-align:center;color:#8993a7;"
+                                >
+                                    Aucun problème de présence.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTRATS -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-head">
+
+                <h3 class="dashboard-card-title">
+                    Résumé des contrats
+                </h3>
+
+                <a href="{% url 'contract_list' %}"
+                   class="dashboard-card-link">
+                    Voir →
+                </a>
+
+            </div>
+
+
+            <div class="dashboard-contract-layout">
+
+
+                <div class="dashboard-contract-chart">
+
+                    <canvas id="contractChart"></canvas>
+
+                </div>
+
+
+                <div class="dashboard-contract-legend">
+
+
+                    <!-- CDI -->
+
+                    <div class="dashboard-contract-line">
+
+                        <div class="dashboard-contract-left">
+
+                            <span
+                                class="dashboard-legend-dot"
+                                style="background:#1769e0;">
+                            </span>
+
+                            CDI
+
+                        </div>
+
+                        <span class="dashboard-contract-number">
+                            {{ contract_stats.cdi }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- CDD -->
+
+                    <div class="dashboard-contract-line">
+
+                        <div class="dashboard-contract-left">
+
+                            <span
+                                class="dashboard-legend-dot"
+                                style="background:#7556e8;">
+                            </span>
+
+                            CDD
+
+                        </div>
+
+                        <span class="dashboard-contract-number">
+                            {{ contract_stats.cdd }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- PERIODE D'ESSAI -->
+
+                    <div class="dashboard-contract-line">
+
+                        <div class="dashboard-contract-left">
+
+                            <span
+                                class="dashboard-legend-dot"
+                                style="background:#1ca979;">
+                            </span>
+
+                            Période d'essai
+
+                        </div>
+
+                        <span class="dashboard-contract-number">
+                            {{ contract_stats.probation }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- TEMPORAIRES -->
+
+                    <div class="dashboard-contract-line">
+
+                        <div class="dashboard-contract-left">
+
+                            <span
+                                class="dashboard-legend-dot"
+                                style="background:#e7a32b;">
+                            </span>
+
+                            Temporaires
+
+                        </div>
+
+                        <span class="dashboard-contract-number">
+                            {{ contract_stats.temporary }}
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+            {% if contracts_ending_soon %}
+
+                <div class="dashboard-contract-alert">
+
+                    ⚠
+
+                    {{ contracts_ending_soon|length }}
+
+                    contrat(s) expirent prochainement.
+
+                </div>
+
+            {% endif %}
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         5. DERNIERS EMPLOYES
+         ===================================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="dashboard-card-head">
+
+            <h3 class="dashboard-card-title">
+                👤 Derniers employés ajoutés
+            </h3>
+
+            <a href="{% url 'employee_list' %}"
+               class="dashboard-card-link">
+                Voir tout →
+            </a>
+
+        </div>
+
+
+        {% for employee in recent_employees %}
+
+            <div class="dashboard-recent-employee">
+
+
+                <div class="dashboard-employee-avatar">
+
+                    {{ employee.first_name|first|upper }}
+
+                </div>
+
+
+                <div class="dashboard-recent-info">
+
+                    <div class="dashboard-recent-name">
+
+                        {{ employee.first_name }}
+                        {{ employee.last_name }}
+
+                    </div>
+
+                    <div class="dashboard-recent-workshop">
+
+                        {{ employee.workshop|default:"Sans atelier" }}
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-recent-date">
+
+                    {{ employee.date_joined|date:"d/m/Y" }}
+
+                </div>
+
+
+            </div>
+
+        {% empty %}
+
+            <p class="dashboard-empty">
+                Aucun nouvel employé.
+            </p>
+
+        {% endfor %}
+
+
+    </div>
+
+
+    <!-- =====================================================
+         6. ACTIVITE RECENTE
+         ===================================================== -->
+
+    <div class="dashboard-card">
+
+
+        <div class="dashboard-card-head">
+
+            <h3 class="dashboard-card-title">
+                🕓 Activité récente
+            </h3>
+
+        </div>
+
+
+        {% if recent_activity %}
+
+
+            <div class="dashboard-table-wrapper">
+
+                <table class="dashboard-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Utilisateur
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                            <th>
+                                Élément
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for log in recent_activity %}
+
+                            <tr>
+
+                                <td>
+                                    {{ log.timestamp|date:"d/m/Y H:i" }}
+                                </td>
+
+                                <td>
+                                    {{ log.user|default:"Système" }}
+                                </td>
+
+                                <td>
+
+                                    <span class="dashboard-badge dashboard-status-success">
+
+                                        {{ log.get_action_display }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    {{ log.model_name }}
+                                    —
+                                    {{ log.object_repr }}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+            <p class="dashboard-empty">
+
+                Aucune activité enregistrée pour le moment.
+
+            </p>
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script>
+
+/* =========================================================
+   DONNEES DJANGO
+   ========================================================= */
+
+window.WEEK_CHART_DATA =
+    {{ week_chart_json|safe }};
+
+window.TODAY_COUNTS =
+    {{ today_counts_json|safe }};
+
+
+/* =========================================================
+   GRAPHIQUE PRESENCE / ABSENCE
+   ========================================================= */
+
+const weekCanvas =
+    document.getElementById('weekChart');
+
+
+if (weekCanvas && typeof Chart !== 'undefined') {
+
+    const weekData =
+        window.WEEK_CHART_DATA || [];
+
+
+    new Chart(
+        weekCanvas,
+        {
+            type: 'bar',
+
+            data: {
+
+                labels: weekData.map(
+                    item => item.label
+                ),
+
+                datasets: [
+
+                    {
+                        label: 'Présents',
+
+                        data: weekData.map(
+                            item => item.present
+                        ),
+
+                        backgroundColor: '#1769e0',
+
+                        borderRadius: 7,
+
+                        barThickness: 16
+                    },
+
+
+                    {
+                        label: 'Absents',
+
+                        data: weekData.map(
+                            item => item.absent
+                        ),
+
+                        backgroundColor: '#df3e55',
+
+                        borderRadius: 7,
+
+                        barThickness: 16
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        position: 'top',
+                        align: 'end'
+                    }
+
+                },
+
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        grid: {
+                            color: '#edf1f7'
+                        },
+
+                        ticks: {
+                            color: '#8993a7'
+                        }
+
+                    },
+
+
+                    x: {
+
+                        grid: {
+                            display: false
+                        },
+
+                        ticks: {
+                            color: '#8993a7'
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   DONUT POINTAGE DU JOUR
+   ========================================================= */
+
+const donutCanvas =
+    document.getElementById('todayDonut');
+
+
+if (donutCanvas && typeof Chart !== 'undefined') {
+
+    const counts =
+        window.TODAY_COUNTS || {};
+
+
+    new Chart(
+        donutCanvas,
+        {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels: [
+                    'Présents',
+                    'Absents',
+                    'Retards',
+                    'Non pointés'
+                ],
+
+                datasets: [
+
+                    {
+
+                        data: [
+
+                            counts.present || 0,
+
+                            counts.absent || 0,
+
+                            counts.late || 0,
+
+                            counts.not_recorded || 0
+
+                        ],
+
+                        backgroundColor: [
+
+                            '#1769e0',
+
+                            '#df3e55',
+
+                            '#e2a333',
+
+                            '#dfe4ee'
+
+                        ],
+
+                        borderWidth: 0
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                cutout: '72%',
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   GRAPHIQUE CONTRATS
+   ========================================================= */
+
+const contractCanvas =
+    document.getElementById('contractChart');
+
+
+if (contractCanvas && typeof Chart !== 'undefined') {
+
+
+    new Chart(
+        contractCanvas,
+        {
+
+            type: 'doughnut',
+
+
+            data: {
+
+                labels: [
+
+                    'CDI',
+
+                    'CDD',
+
+                    'Période d’essai',
+
+                    'Temporaires'
+
+                ],
+
+
+                datasets: [
+
+                    {
+
+                        data: [
+
+                            {{ contract_stats.cdi|default:0 }},
+
+                            {{ contract_stats.cdd|default:0 }},
+
+                            {{ contract_stats.probation|default:0 }},
+
+                            {{ contract_stats.temporary|default:0 }}
+
+                        ],
+
+
+                        backgroundColor: [
+
+                            '#1769e0',
+
+                            '#7556e8',
+
+                            '#1ca979',
+
+                            '#e7a32b'
+
+                        ],
+
+
+                        borderWidth: 0
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                cutout: '65%',
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+</script>
+
+{% endblock %}

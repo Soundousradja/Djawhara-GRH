@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Contrats — Djawhara GRH{% endblock %}
+{% block page_title %}Contrats{% endblock %}
+{% block page_subtitle %}Suivi des contrats de travail et des échéances{% endblock %}
+{% block topbar_actions %}
+  {% if user_profile.can_manage_contracts %}
+  <a href="{% url 'contract_create' %}" class="btn btn-primary">➕ Nouveau contrat</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if ending_soon %}
+<div class="card" style="border-left:4px solid var(--warning);">
+  <h3>⏳ {{ ending_soon|length }} contrat(s) arrivant à échéance</h3>
+  <div class="timeline-list">
+    {% for c in ending_soon %}
+    <div class="timeline-item">
+      <div><strong>{{ c.employee }}</strong> <span class="meta">— {{ c.get_contract_type_display }}</span></div>
+      <span class="badge badge-warning">{{ c.days_before_end }} jour(s) restants</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <form method="get" class="filters-bar">
+    <select class="form-control" name="type">
+      <option value="">Tous les types</option>
+      {% for code, label in type_choices %}
+        <option value="{{ code }}" {% if filters.type == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" name="status">
+      <option value="">Tous les statuts</option>
+      {% for code, label in status_choices %}
+        <option value="{{ code }}" {% if filters.status == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline" type="submit">Filtrer</button>
+  </form>
+
+  <table class="data-table">
+    <thead><tr><th>Employé</th><th>Type</th><th>Début</th><th>Fin</th><th>Salaire</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for c in contracts %}
+      <tr>
+        <td>{{ c.employee }}</td>
+        <td><span class="badge badge-info">{{ c.get_contract_type_display }}</span></td>
+        <td>{{ c.start_date|date:"d/m/Y" }}</td>
+        <td>{{ c.end_date|date:"d/m/Y"|default:"—" }}</td>
+        <td>{{ c.base_salary }} DA</td>
+        <td>
+          {% if c.is_ending_soon %}<span class="badge badge-warning">Fin proche</span>
+          {% elif c.status == 'ACTIF' %}<span class="badge badge-success">Actif</span>
+          {% else %}<span class="badge badge-muted">{{ c.get_status_display }}</span>{% endif %}
+        </td>
+        <td>{% if user_profile.can_manage_contracts %}<div style="display:flex; align-items:center; gap:6px; white-space:nowrap;"><a href="{% url 'contract_update' c.pk %}" class="btn btn-outline btn-sm">Modifier</a><form method="post" action="{% url 'contract_delete' c.pk %}" style="display:inline; margin:0;" onsubmit="return confirm('Supprimer ce contrat ?');">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">Supprimer</button></form></div>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Aucun contrat trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

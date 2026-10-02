@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Salaires — Djawhara GRH{% endblock %}
+{% block page_title %}Préparation des salaires{% endblock %}
+{% block page_subtitle %}Éléments de paie mensuels par employé{% endblock %}
+{% block topbar_actions %}
+  {% if user_profile.can_edit_payroll %}
+  <a href="{% url 'payroll_create' %}" class="btn btn-primary">➕ Nouvel élément de paie</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <select class="form-control" name="month">
+      <option value="">Tous les mois</option>
+      <option value="1" {% if filters.month == '1' %}selected{% endif %}>Janvier</option>
+      <option value="2" {% if filters.month == '2' %}selected{% endif %}>Février</option>
+      <option value="3" {% if filters.month == '3' %}selected{% endif %}>Mars</option>
+      <option value="4" {% if filters.month == '4' %}selected{% endif %}>Avril</option>
+      <option value="5" {% if filters.month == '5' %}selected{% endif %}>Mai</option>
+      <option value="6" {% if filters.month == '6' %}selected{% endif %}>Juin</option>
+      <option value="7" {% if filters.month == '7' %}selected{% endif %}>Juillet</option>
+      <option value="8" {% if filters.month == '8' %}selected{% endif %}>Août</option>
+      <option value="9" {% if filters.month == '9' %}selected{% endif %}>Septembre</option>
+      <option value="10" {% if filters.month == '10' %}selected{% endif %}>Octobre</option>
+      <option value="11" {% if filters.month == '11' %}selected{% endif %}>Novembre</option>
+      <option value="12" {% if filters.month == '12' %}selected{% endif %}>Décembre</option>
+    </select>
+    <select class="form-control" name="workshop">
+      <option value="">Tous les ateliers</option>
+      {% for workshop in workshops %}
+        <option value="{{ workshop.id }}" {% if selected_workshop == workshop.id|stringformat:"s" %}selected{% endif %}>{{ workshop.name }}</option>
+      {% endfor %}
+    </select>
+    <input class="form-control" type="number" name="year" placeholder="Année" value="{{ filters.year }}" style="max-width:120px;">
+    <button class="btn btn-outline" type="submit">Filtrer</button>
+  </form>
+
+  <table class="data-table">
+    <thead><tr><th>Employé</th><th>Mois</th><th>Jours travaillés</th><th>Absences</th><th>Primes</th><th>Retenues</th><th>Net à payer</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for e in elements %}
+      <tr>
+        <td>{{ e.employee }}</td>
+        <td>{{ e.get_month_display }} {{ e.year }}</td>
+        <td>{{ e.work_days }}</td>
+        <td>{{ e.absence_days }}</td>
+        <td>{{ e.total_bonuses }} DA</td>
+        <td>{{ e.total_deductions }} DA</td>
+        <td style="font-weight:700; color:var(--primary-dark);">{{ e.net_pay }} DA</td>
+        <td>
+          {% if e.status == 'PAYE' %}<span class="badge badge-success">Payé</span>
+          {% elif e.status == 'VALIDE' %}<span class="badge badge-info">Validé</span>
+          {% else %}<span class="badge badge-muted">Brouillon</span>{% endif %}
+        </td>
+        <td><a href="{% url 'payroll_detail' e.pk %}" class="btn btn-outline btn-sm">Voir</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" style="text-align:center; color:var(--text-muted);">Aucun élément de paie trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if elements %}
+  <p style="text-align:right; font-weight:700; margin-top:10px;">Total net: {{ total_net }} DA</p>
+  {% endif %}
+</div>
+{% endblock %}

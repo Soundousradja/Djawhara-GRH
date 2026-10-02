@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiche de paie - {{ payroll.employee.full_name }} - {{ payroll.get_month_display }} {{ payroll.year }}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { color: #172033; font-family: Arial, sans-serif; font-size: 12px; margin: 32px; }
+    .actions { margin-bottom: 18px; }
+    button { background: #0f766e; border: 0; color: #fff; cursor: pointer; padding: 9px 14px; }
+    .heading { border-bottom: 2px solid #0f766e; display: flex; justify-content: space-between; margin-bottom: 22px; padding-bottom: 13px; }
+    h1 { font-size: 22px; margin: 0 0 5px; }
+    .company { color: #475569; font-size: 13px; }
+    .period { font-size: 14px; font-weight: 700; text-align: right; }
+    .section { margin-top: 20px; }
+    h2 { font-size: 14px; margin: 0 0 8px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #94a3b8; padding: 8px 9px; text-align: left; }
+    th { background: #e2e8f0; }
+    td.amount, th.amount { text-align: right; }
+    .summary { margin-left: auto; margin-top: 20px; width: 42%; }
+    .summary td { font-weight: 700; }
+    .summary .net td { background: #d1fae5; font-size: 15px; }
+    .signatures { display: flex; justify-content: space-between; margin-top: 54px; }
+    .signatures div { min-width: 200px; text-align: center; }
+    .signatures span { border-top: 1px solid #334155; display: block; margin-top: 43px; padding-top: 6px; }
+    @media print {
+      body { margin: 14mm; }
+      .actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="actions"><button type="button" onclick="window.print()">Imprimer</button></div>
+  <header class="heading">
+    <div>
+      <h1>Fiche de paie</h1>
+      <div class="company">El Djawhara - Entreprise de Confiserie</div>
+    </div>
+    <div class="period">{{ payroll.get_month_display }} {{ payroll.year }}</div>
+  </header>
+
+  <div class="section">
+    <h2>Informations employé</h2>
+    <table>
+      <tr><th>Matricule</th><td>{{ payroll.employee.matricule }}</td><th>Employé</th><td>{{ payroll.employee.full_name }}</td></tr>
+      <tr><th>Poste</th><td>{{ payroll.employee.position|default:"-" }}</td><th>Atelier</th><td>{{ payroll.employee.workshop|default:"-" }}</td></tr>
+      <tr><th>N° CNAS</th><td colspan="3">{{ payroll.employee.cnas_number|default:"-" }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Éléments de salaire</h2>
+    <table>
+      <thead><tr><th>Libellé</th><th class="amount">Montant</th></tr></thead>
+      <tbody>
+        <tr><td>Salaire de base</td><td class="amount">{{ payroll.base_salary }} DA</td></tr>
+        <tr><td>Jours travaillés</td><td class="amount">{{ payroll.work_days }}</td></tr>
+        <tr><td>Jours d'absence</td><td class="amount">{{ payroll.absence_days }}</td></tr>
+        <tr><td>Heures supplémentaires</td><td class="amount">{{ payroll.overtime_hours }}</td></tr>
+        <tr><td>Montant heures supplémentaires</td><td class="amount">{{ payroll.overtime_amount }} DA</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Primes</h2>
+    <table>
+      <thead><tr><th>Libellé</th><th class="amount">Montant</th></tr></thead>
+      <tbody>
+        <tr><td>Prime d'ancienneté</td><td class="amount">{{ payroll.seniority_bonus }} DA</td></tr>
+        {% for bonus in bonuses %}
+          <tr><td>{{ bonus.get_label_display }}</td><td class="amount">{{ bonus.amount }} DA</td></tr>
+        {% empty %}
+          <tr><td colspan="2">Aucune prime.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Retenues</h2>
+    <table>
+      <thead><tr><th>Libellé</th><th class="amount">Montant</th></tr></thead>
+      <tbody>
+        {% for deduction in deductions %}
+          <tr><td>{{ deduction.get_label_display }}</td><td class="amount">{{ deduction.amount }} DA</td></tr>
+        {% empty %}
+          <tr><td colspan="2">Aucune retenue.</td></tr>
+        {% endfor %}
+        <tr><td>Avance / Acompte</td><td class="amount">{{ payroll.advance }} DA</td></tr>
+        <tr><td>Retenue pour retard ({{ payroll.late_minutes }} min)</td><td class="amount">{{ payroll.late_deduction }} DA</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <table class="summary">
+    <tr><td>Total des primes</td><td class="amount">{{ payroll.total_bonuses }} DA</td></tr>
+    <tr><td>Total des retenues</td><td class="amount">{{ payroll.total_deductions }} DA</td></tr>
+    <tr class="net"><td>Net à payer</td><td class="amount">{{ payroll.net_pay }} DA</td></tr>
+  </table>
+
+  <div class="signatures">
+    <div><span>Signature employé</span></div>
+    <div><span>Visa RH / Comptabilité</span></div>
+  </div>
+</body>
+</html>

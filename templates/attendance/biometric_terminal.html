@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Borne d'empreinte — Djawhara GRH{% endblock %}
+{% block page_title %}Pointage par empreinte{% endblock %}
+{% block page_subtitle %}La borne transmet uniquement l'identifiant du terminal, jamais l'empreinte elle-même.{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'attendance_daily' %}" class="btn btn-outline">Pointage manuel</a>
+{% endblock %}
+{% block content %}
+<div class="card" style="max-width:620px; margin:0 auto; text-align:center; padding:36px;">
+  <div style="font-size:56px; margin-bottom:12px;">☝️</div>
+  <h3>Présentez votre empreinte</h3>
+  <p style="color:var(--text-muted);">Présentez votre doigt : le lecteur envoie l'identifiant et le pointage est enregistré automatiquement.</p>
+  <form id="biometric-punch-form" method="post" action="{% url 'biometric_punch' %}" style="margin-top:24px;">
+    {% csrf_token %}
+    <input id="biometric-id" class="form-control" name="biometric_id" autofocus autocomplete="off" placeholder="En attente du lecteur…" required>
+    <select class="form-control" name="direction" style="margin-top:12px;">
+      <option value="IN">Entrée</option>
+      <option value="OUT">Sortie</option>
+    </select>
+    <p id="biometric-status" aria-live="polite" style="color:var(--text-muted); margin-top:16px;">En attente d'une empreinte…</p>
+  </form>
+</div>
+<script>
+  (() => {
+    const form = document.getElementById('biometric-punch-form');
+    const biometricId = document.getElementById('biometric-id');
+    const status = document.getElementById('biometric-status');
+    let timer;
+    let submitting = false;
+
+    function submitPunch() {
+      if (submitting || !biometricId.value.trim()) return;
+      submitting = true;
+      status.textContent = 'Enregistrement du pointage…';
+      biometricId.setAttribute('readonly', 'readonly');
+      form.requestSubmit();
+    }
+
+    // La plupart des lecteurs émettent un identifiant suivi de la touche Entrée.
+    biometricId.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        clearTimeout(timer);
+        submitPunch();
+      }
+    });
+
+    // Certains lecteurs collent seulement l'identifiant : après une courte pause,
+    // le pointage est aussi envoyé automatiquement.
+    biometricId.addEventListener('input', () => {
+      clearTimeout(timer);
+      if (!biometricId.value.trim()) return;
+      timer = setTimeout(submitPunch, 500);
+    });
+
+    biometricId.focus();
+  })();
+</script>
+{% endblock %}

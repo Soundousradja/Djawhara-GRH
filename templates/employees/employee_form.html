@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{% if employee %}Modifier{% else %}Nouvel employé{% endif %} — Djawhara GRH{% endblock %}
+{% block page_title %}{% if employee %}Modifier {{ employee }}{% else %}Nouvel employé{% endif %}{% endblock %}
+{% block page_subtitle %}Dossier employé — informations personnelles et professionnelles{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:900px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <p>
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.help_text %}<small style="display:block; color:var(--text-muted); margin-top:4px;">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<small style="display:block; color:var(--danger); margin-top:4px;">{{ error }}</small>{% endfor %}
+        </p>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a href="{% url 'employee_list' %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

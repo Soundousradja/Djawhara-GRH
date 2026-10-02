@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}{% if contract %}Modifier contrat{% else %}Nouveau contrat{% endif %} — Djawhara GRH{% endblock %}
+{% block page_title %}{% if contract %}Modifier le contrat{% else %}Nouveau contrat{% endif %}{% endblock %}
+{% block page_subtitle %}CDI, CDD, période d'essai ou travailleur temporaire{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:800px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-grid">
+      {{ form.as_p }}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+      <a href="{% url 'contract_list' %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

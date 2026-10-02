@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Rapport hebdomadaire — Djawhara GRH{% endblock %}
+{% block page_title %}Rapport hebdomadaire{% endblock %}
+{% block page_subtitle %}Semaine du {{ start|date:"d/m/Y" }} au {{ end|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <h3>🚫 Employés les plus absents</h3>
+    <table class="data-table">
+      <thead><tr><th>Employé</th><th>Absences</th></tr></thead>
+      <tbody>
+        {% for e in top_absent %}
+        <tr><td>{{ e.employee__first_name }} {{ e.employee__last_name }}</td><td><span class="badge badge-danger">{{ e.total }}</span></td></tr>
+        {% empty %}<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Aucune absence cette semaine.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>🕒 Employés les plus en retard</h3>
+    <table class="data-table">
+      <thead><tr><th>Employé</th><th>Retards</th></tr></thead>
+      <tbody>
+        {% for e in top_late %}
+        <tr><td>{{ e.employee__first_name }} {{ e.employee__last_name }}</td><td><span class="badge badge-warning">{{ e.total }}</span></td></tr>
+        {% empty %}<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Aucun retard cette semaine.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3>🏭 Comparaison entre ateliers</h3>
+  <table class="data-table">
+    <thead><tr><th>Atelier</th><th>Présences</th><th>Absences</th><th>Retards</th></tr></thead>
+    <tbody>
+      {% for w in by_workshop %}
+      <tr><td>{{ w.workshop__name|default:"Sans atelier" }}</td><td>{{ w.present }}</td><td>{{ w.absent }}</td><td>{{ w.late }}</td></tr>
+      {% empty %}<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Aucune donnée.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

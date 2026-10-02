@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Pointage — Djawhara GRH{% endblock %}
+{% block page_title %}Pointage quotidien{% endblock %}
+{% block page_subtitle %}Enregistrez la présence, les retards et les absences par atelier{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'biometric_terminal' %}" class="btn btn-primary">Empreinte</a>
+  <a href="{% url 'attendance_history' %}" class="btn btn-outline">📜 Historique</a>
+  <a href="{% url 'discipline_dashboard' %}" class="btn btn-outline">⚠️ Suivi discipline</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <input class="form-control" type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+    <select class="form-control" name="workshop">
+      {% for w in workshops %}
+        <option value="{{ w.id }}" {% if selected_workshop == w.id %}selected{% endif %}>{{ w.name }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline" type="submit">Afficher</button>
+    <a class="btn btn-outline" target="_blank" href="{% url 'daily_attendance_print' %}?date={{ selected_date|date:'Y-m-d' }}&workshop={{ selected_workshop|default:'' }}">Imprimer la liste</a>
+  </form>
+  <div class="table-responsive"></div>
+  <table class="data-table" id="attendance-sheet" data-date="{{ selected_date|date:'Y-m-d' }}">
+    <thead>
+      <tr>
+        <th>Employé</th>
+        <th>Statut</th>
+        <th>Minutes de retard</th>
+        <th>Remarque</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr data-employee-id="{{ row.employee.id }}">
+        <td style="font-weight:600;">{{ row.employee.full_name }}</td>
+        <td>
+          <select class="form-control att-field att-status" style="margin-bottom:0;">
+                <option value="" {% if not row.record %}selected{% endif %}>
+                    -- Choisir le statut --
+                </option>
+
+         {% for code, label in status_choices %}
+               <option value="{{ code }}" {% if row.record and row.record.status == code %}selected{% endif %}>
+               {{ label }}
+               </option>
+         {% endfor %}
+        </select>
+        </td>
+        <td>
+          <input type="number" min="0" class="form-control att-field att-minutes" style="margin-bottom:0; max-width:100px;"
+                 value="{{ row.record.minutes_late|default:0 }}">
+        </td>
+        <td>
+          <input type="text" class="form-control att-field att-note" style="margin-bottom:0;"
+                 value="{{ row.record.note|default:'' }}" placeholder="Remarque du chef d'atelier">
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Aucun employé actif dans cet atelier.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p style="color:var(--text-muted); font-size:12.5px; margin-top:10px;">
+    💡 Chaque modification est enregistrée automatiquement — pas besoin de bouton "Enregistrer".
+  </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const SAVE_ATTENDANCE_URL = "{% url 'save_attendance' %}";
+</script>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Dossiers incomplets - Djawhara GRH
+{% endblock %}
+
+{% block page_title %}
+Dossiers incomplets
+{% endblock %}
+
+{% block page_subtitle %}
+Employés dont le dossier contient des documents manquants
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-card">
+
+    <div class="card-header">
+        <div>
+            <h2>Dossiers incomplets</h2>
+            <p>
+                {{ incomplete_files|length }} employé(s) concerné(s)
+            </p>
+        </div>
+    </div>
+
+    {% if incomplete_files %}
+
+        <div class="table-wrapper">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Employé</th>
+                        <th>Atelier</th>
+                        <th>Documents manquants</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in incomplete_files %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ item.employee.first_name }}
+                                {{ item.employee.last_name }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {% if item.employee.workshop %}
+                                {{ item.employee.workshop.name }}
+                            {% else %}
+                                Sans atelier
+                            {% endif %}
+                        </td>
+
+                        <td>
+
+                            <span class="badge badge-danger">
+                                {{ item.missing_count }} document(s)
+                            </span>
+
+                            <div class="missing-documents">
+
+                                {% for document in item.missing_documents %}
+
+                                    <div>
+                                        • {{ document }}
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <a
+                                href="{% url 'employee_detail' item.employee.pk %}"
+                                class="btn btn-primary"
+                            >
+                                Voir le dossier
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ✓
+            </div>
+
+            <h3>Tous les dossiers sont complets</h3>
+
+            <p>
+                Aucun employé ne possède actuellement de document manquant.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

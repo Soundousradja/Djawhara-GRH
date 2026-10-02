@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Historique de pointage — Djawhara GRH{% endblock %}
+{% block page_title %}Historique des pointages{% endblock %}
+{% block page_subtitle %}Consultez et filtrez les pointages enregistrés{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'attendance_daily' %}" class="btn btn-primary">🕒 Nouveau pointage</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <select class="form-control" name="workshop">
+      <option value="">Tous les ateliers</option>
+      {% for w in workshops %}
+        <option value="{{ w.id }}" {% if filters.workshop == w.id|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" name="status">
+      <option value="">Tous les statuts</option>
+      {% for code, label in status_choices %}
+        <option value="{{ code }}" {% if filters.status == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <input class="form-control" type="date" name="date_from" value="{{ filters.date_from }}" placeholder="Du">
+    <input class="form-control" type="date" name="date_to" value="{{ filters.date_to }}" placeholder="Au">
+    <button class="btn btn-outline" type="submit">Filtrer</button>
+  </form>
+
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Employé</th><th>Atelier</th><th>Statut</th><th>Entrée</th><th>Sortie</th><th>Source</th><th>Retard (min)</th><th>Remarque</th></tr></thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.date|date:"d/m/Y" }}</td>
+        <td>{{ r.employee }}</td>
+        <td>{{ r.workshop|default:"—" }}</td>
+        <td>
+          {% if r.is_problem %}<span class="badge badge-danger">{{ r.get_status_display }}</span>
+          {% else %}<span class="badge badge-success">{{ r.get_status_display }}</span>{% endif %}
+        </td>
+        <td>{{ r.check_in_at|date:"d/m/Y H:i"|default:"—" }}</td>
+        <td>{{ r.check_out_at|date:"d/m/Y H:i"|default:"—" }}</td>
+        <td>{{ r.get_source_display }}</td>
+        <td>{{ r.minutes_late }}</td>
+        <td>{{ r.note|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" style="text-align:center; color:var(--text-muted);">Aucun pointage trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

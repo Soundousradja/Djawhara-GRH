@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Employés — Djawhara GRH{% endblock %}
+{% block page_title %}Employés{% endblock %}
+{% block page_subtitle %}Liste des dossiers du personnel{% endblock %}
+{% block topbar_actions %}
+  {% if user_profile.can_manage_employees %}
+  <a href="{% url 'employee_create' %}" class="btn btn-primary">➕ Nouvel employé</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <input class="form-control search-input" type="text" name="q" value="{{ q }}" placeholder="Rechercher un employé, poste, N° CIN...">
+    <select class="form-control" name="workshop">
+      <option value="">Tous les ateliers</option>
+      {% for w in workshops %}
+        <option value="{{ w.id }}" {% if selected_workshop == w.id|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" name="status">
+      <option value="">Tous les statuts</option>
+      {% for code, label in status_choices %}
+        <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" name="sex">
+      <option value="">Tous les sexes</option>
+      {% for code, label in sex_choices %}
+        <option value="{{ code }}" {% if selected_sex == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline" type="submit">Filtrer</button>
+  </form>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Matricule</th><th>Employé</th><th>Poste</th><th>Atelier</th><th>Statut</th><th>Date d'embauche</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for emp in page_obj %}
+      <tr>
+        <td>{{ emp.matricule }}</td>
+        <td>
+          <a href="{% url 'employee_detail' emp.pk %}" class="employee-list-identity">
+            <span class="employee-list-avatar" aria-hidden="true">
+              {% if emp.photo %}
+                <img src="{{ emp.photo.url }}" alt="">
+              {% else %}
+                {{ emp.first_name|first|upper }}
+              {% endif %}
+            </span>
+            <span>{{ emp.full_name }}</span>
+          </a>
+        </td>
+        <td>{{ emp.position|default:"—" }}</td>
+        <td>{{ emp.workshop|default:"—" }}</td>
+        <td>
+          {% if emp.status == 'ACTIF' %}<span class="badge badge-success">Actif</span>
+          {% elif emp.status == 'SUSPENDU' %}<span class="badge badge-warning">Suspendu</span>
+          {% else %}<span class="badge badge-muted">Arrêté</span>{% endif %}
+        </td>
+        <td>{{ emp.hire_date|date:"d/m/Y"|default:"—" }}</td>
+        <td><a href="{% url 'employee_detail' emp.pk %}" class="btn btn-outline btn-sm">Voir</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Aucun employé trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; gap:8px; margin-top:16px;">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-outline btn-sm" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&workshop={{ selected_workshop }}&status={{ selected_status }}&sex={{ selected_sex }}">← Précédent</a>
+    {% endif %}
+    <span class="btn btn-outline btn-sm" style="cursor:default;">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-outline btn-sm" href="?page={{ page_obj.next_page_number }}&q={{ q }}&workshop={{ selected_workshop }}&status={{ selected_status }}&sex={{ selected_sex }}">Suivant →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

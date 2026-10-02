@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Suivi discipline — Djawhara GRH{% endblock %}
+{% block page_title %}Suivi assiduité & discipline{% endblock %}
+{% block page_subtitle %}Employés cumulant des absences ou retards (30 derniers jours){% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h3>⚠️ Employés à surveiller</h3></div>
+    <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Employé</th><th>Atelier</th><th>Absences</th><th>Injustifiées</th><th>Retards</th><th></th></tr></thead>
+      <tbody>
+        {% for e in problem_employees %}
+        <tr>
+          <td style="font-weight:600;">{{ e.name }}</td>
+          <td>{{ e.workshop }}</td>
+          <td>{{ e.absences }}</td>
+          <td>{% if e.unjustified > 0 %}<span class="badge badge-danger">{{ e.unjustified }}</span>{% else %}0{% endif %}</td>
+          <td>{{ e.late }}</td>
+          <td>
+            <button class="btn btn-outline btn-sm select-employee-btn" data-id="{{ e.employee_id }}" data-name="{{ e.name }}">Action</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Aucun problème détecté sur les 30 derniers jours. 👍</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>📝 Nouvelle action disciplinaire</h3></div>
+    <form method="post" id="discipline-form">
+      {% csrf_token %}
+      <label>Employé concerné</label>
+      <input type="hidden" name="employee_id" id="employee_id_input" required>
+      <input type="text" class="form-control" id="employee_name_display" readonly placeholder="Cliquez sur 'Action' dans la liste à gauche">
+      {{ form.as_p }}
+      <button class="btn btn-primary btn-full-mobile" type="submit">
+       Enregistrer l'action
+      </button>
+    </form>
+
+    <div class="card-head" style="margin-top:22px;"><h3>Actions récentes</h3></div>
+    <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Employé</th><th>Type</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for a in recent_actions %}
+        <tr><td>{{ a.employee }}</td><td>{{ a.get_action_type_display }}</td><td>{{ a.date|date:"d/m/Y" }}</td></tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Aucune action enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.select-employee-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('employee_id_input').value = btn.dataset.id;
+      document.getElementById('employee_name_display').value = btn.dataset.name;
+    });
+  });
+</script>
+{% endblock %}

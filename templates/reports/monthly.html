@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Rapport mensuel — Djawhara GRH{% endblock %}
+{% block page_title %}Rapport mensuel{% endblock %}
+{% block page_subtitle %}{{ month }}/{{ year }}{% endblock %}
+{% block topbar_actions %}
+  <a href="?month={{ month }}&year={{ year }}&export=csv" class="btn btn-outline">⬇️ Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="filters-bar">
+    <input class="form-control" type="number" min="1" max="12" name="month" value="{{ month }}" style="max-width:100px;">
+    <input class="form-control" type="number" name="year" value="{{ year }}" style="max-width:120px;">
+    <button class="btn btn-outline" type="submit">Afficher</button>
+  </form>
+
+  <div class="grid grid-3" style="margin-bottom:18px;">
+    <div class="stat-card"><div class="stat-icon">🧑‍🤝‍🧑</div><div><div class="stat-value">{{ active_employees }}</div><div class="stat-label">Employés actifs</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🚪</div><div><div class="stat-value">{{ stopped_employees }}</div><div class="stat-label">Employés sortis</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📄</div><div><div class="stat-value">{{ contracts_ending|length }}</div><div class="stat-label">Contrats se terminant ce mois</div></div></div>
+  </div>
+
+  <h3>Éléments de paie du mois</h3>
+  <table class="data-table">
+    <thead><tr><th>Employé</th><th>Jours travaillés</th><th>Absences</th><th>Primes</th><th>Retenues</th><th>Net à payer</th></tr></thead>
+    <tbody>
+      {% for p in payroll_elements %}
+      <tr><td>{{ p.employee }}</td><td>{{ p.work_days }}</td><td>{{ p.absence_days }}</td><td>{{ p.total_bonuses }} DA</td><td>{{ p.total_deductions }} DA</td><td style="font-weight:700;">{{ p.net_pay }} DA</td></tr>
+      {% empty %}<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Aucun élément de paie pour ce mois.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

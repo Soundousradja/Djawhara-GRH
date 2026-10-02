@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Ateliers — Djawhara GRH{% endblock %}
+{% block page_title %}Ateliers{% endblock %}
+{% block page_subtitle %}Liste des ateliers et services de l'usine{% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h3>Ateliers existants</h3></div>
+    <table class="data-table">
+      <thead><tr><th>Nom</th><th>Description</th><th>Employés actifs</th></tr></thead>
+      <tbody>
+        {% for w in workshops %}
+        <tr>
+          <td style="font-weight:600;">{{ w.name }}</td>
+          <td>{{ w.description|default:"—" }}</td>
+          <td><span class="badge badge-info">{{ w.active_employee_count }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Aucun atelier créé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>➕ Ajouter un atelier</h3></div>
+    {% if can_manage %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </form>
+    {% else %}
+    <p style="color:var(--text-muted); font-size:13.5px;">Seuls le Directeur Général et le Responsable RH peuvent ajouter un atelier.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

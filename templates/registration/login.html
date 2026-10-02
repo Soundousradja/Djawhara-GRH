@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Djawhara GRH</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page">
+<div class="login-wrap">
+  <main class="login-card" aria-labelledby="login-title">
+    <div class="login-brand">
+      <div class="brand-badge">DJ</div>
+      <span>Djawhara <small>GRH</small></span>
+    </div>
+    <div class="login-heading">
+      <p class="login-kicker">ESPACE SÉCURISÉ</p>
+      <h1 id="login-title">Bienvenue</h1>
+    </div>
+    <p class="sub">Mouassasat El Jawhara — Gestion des ressources humaines</p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message message-{{ message.tags }}" style="margin-bottom:14px;">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <div class="login-field">
+        <label for="id_username">Identifiant</label>
+        <input id="id_username" class="form-control" type="text" name="username" autocomplete="username" required autofocus placeholder="Saisissez votre identifiant">
+      </div>
+      <div class="login-field">
+        <label for="id_password">Mot de passe</label>
+        <input id="id_password" class="form-control" type="password" name="password" autocomplete="current-password" required placeholder="Saisissez votre mot de passe">
+      </div>
+      <button class="btn btn-primary login-submit" type="submit">Se connecter <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="login-security">Accès réservé au personnel autorisé</p>
+  </main>
+</div>
+</body>
+</html>

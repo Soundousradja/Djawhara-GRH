@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Djawhara GRH{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+   <div class="brand">
+    <div class="brand-badge">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f2b53c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="12" r="5"></circle>
+            <circle cx="16" cy="12" r="5"></circle>
+        </svg>
+    </div>
+    <div class="brand-text">
+        <span class="brand-name">El Djawhara</span>
+        <small class="brand-sub">Entreprise de Confiserie</small>
+    </div>
+</div>
+
+    <nav class="nav-menu">
+      <a href="{% url 'dashboard' %}" class="{% if active_menu == 'dashboard' %}active{% endif %}">
+        <span class="ic">🏠</span> Tableau de bord
+      </a>
+      <a href="{% url 'employee_list' %}" class="{% if active_menu == 'employees' %}active{% endif %}">
+        <span class="ic">🧑‍🤝‍🧑</span> Employés
+      </a>
+      <a href="{% url 'workshop_list' %}" class="{% if active_menu == 'workshops' %}active{% endif %}">
+        <span class="ic">🏭</span> Ateliers
+      </a>
+      <a href="{% url 'attendance_daily' %}" class="{% if active_menu == 'attendance' %}active{% endif %}">
+        <span class="ic">🕒</span> Pointage
+      </a>
+      <a href="{% url 'contract_list' %}" class="{% if active_menu == 'contracts' %}active{% endif %}">
+        <span class="ic">📄</span> Contrats
+      </a>
+      {% if user_profile.can_view_payroll %}
+      <a href="{% url 'payroll_list' %}" class="{% if active_menu == 'payroll' %}active{% endif %}">
+        <span class="ic">💰</span> Salaires
+      </a>
+      {% endif %}
+      <a href="{% url 'reports_home' %}" class="{% if active_menu == 'reports' %}active{% endif %}">
+        <span class="ic">📊</span> Rapports
+      </a>
+      {% if user.is_superuser %}
+      <a href="{% url 'admin:index' %}"><span class="ic">⚙️</span> Administration</a>
+      {% endif %}
+    </nav>
+<div class="sidebar-decor">
+    <div class="sidebar-decor-icon">🍬</div>
+    <div class="sidebar-decor-title">El Djawhara</div>
+    <div class="sidebar-decor-sub">Le goût du travail bien fait</div>
+</div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</div>
+        <div>
+          <div class="u-name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="u-role">{{ user_profile.get_role_display|default:"Utilisateur" }}</div>
+        </div>
+      </div>
+      <a href="{% url 'logout' %}" class="logout-link">Déconnexion</a>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>{% block page_title %}Tableau de bord{% endblock %}</h1>
+        <p>{% block page_subtitle %}Mouassasat El Jawhara — fabrication de confiseries{% endblock %}</p>
+      </div>
+      <div class="topbar-actions">
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </header>
+
+    <main class="content">
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="message message-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<!-- Chart.js : une seule fois -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<!-- JavaScript général -->
+<script src="{% static 'js/app.js' %}"></script>
+
+<!-- JavaScript spécifique à chaque page -->
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

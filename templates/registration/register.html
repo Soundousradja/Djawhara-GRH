@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un compte — Djawhara GRH</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page">
+<div class="login-wrap">
+  <main class="login-card" aria-labelledby="register-title">
+    <div class="login-brand">
+      <div class="brand-badge">DJ</div>
+      <span>Djawhara <small>GRH</small></span>
+    </div>
+
+    <div class="login-heading">
+      <p class="login-kicker">CRÉER UN COMPTE</p>
+      <h1 id="register-title">Inscription</h1>
+    </div>
+
+    {% if form.errors %}
+      <div class="message message-error" style="margin-bottom:14px;">
+        {% for field in form %}
+          {% for error in field.errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <div class="login-field">
+        <label for="id_username">Nom d'utilisateur</label>
+        <input id="id_username" class="form-control" type="text" name="username" required>
+      </div>
+      <div class="login-field">
+        <label for="id_email">Email</label>
+        <input id="id_email" class="form-control" type="email" name="email" required>
+      </div>
+      <div class="login-field">
+        <label for="id_password1">Mot de passe</label>
+        <input id="id_password1" class="form-control" type="password" name="password1" required>
+      </div>
+      <div class="login-field">
+        <label for="id_password2">Confirmer le mot de passe</label>
+        <input id="id_password2" class="form-control" type="password" name="password2" required>
+      </div>
+      <div class="login-field">
+        <label for="id_first_name">Prénom</label>
+        <input id="id_first_name" class="form-control" type="text" name="first_name">
+      </div>
+      <div class="login-field">
+        <label for="id_last_name">Nom</label>
+        <input id="id_last_name" class="form-control" type="text" name="last_name">
+      </div>
+      {% if is_manager %}
+      <div class="login-field">
+        <label for="id_role">Rôle</label>
+        <select id="id_role" class="form-control" name="role">
+          <option value="RH">Responsable RH</option>
+          <option value="GERANT">Gérant</option>
+          <option value="CHEF">Chef d'atelier</option>
+          <option value="COMPTABLE">Comptable</option>
+          <option value="DG">Directeur Général</option>
+          <option value="LIMITE">Utilisateur limité</option>
+        </select>
+      </div>
+      {% endif %}
+      <button class="btn btn-primary login-submit" type="submit">
+        {% if is_manager %}Créer le compte{% else %}Créer mon compte responsable{% endif %}
+      </button>
+    </form>
+
+    <p class="login-security" style="margin-top:18px;">
+      Déjà inscrit ? <a href="{% url 'login' %}" style="color:var(--primary); font-weight:700;">Se connecter</a>
+    </p>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Détail paie — Djawhara GRH{% endblock %}
+{% block page_title %}Bulletin — {{ payroll.employee }}{% endblock %}
+{% block page_subtitle %}{{ payroll.get_month_display }} {{ payroll.year }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'payroll_print' payroll.pk %}" target="_blank" class="btn btn-outline">Imprimer la fiche</a>
+  {% if user_profile.can_edit_payroll %}
+  <a href="{% url 'payroll_update' payroll.pk %}" class="btn btn-outline">✏️ Modifier</a>
+  <form method="post" action="{% url 'payroll_delete' payroll.pk %}" style="display:inline;" onsubmit="return confirm('Supprimer définitivement cette fiche de paie ?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline">Supprimer</button>
+  </form>
+  {% endif %}
+  <a href="{% url 'reports_home' %}" class="btn btn-outline">📊 Rapports</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Éléments</h3>
+    <table class="data-table">
+      <tr><th>Salaire de base</th><td>{{ payroll.base_salary }} DA</td></tr>
+      <tr><th>Jours travaillés</th><td>{{ payroll.work_days }}</td></tr>
+      <tr><th>Jours d'absence</th><td>{{ payroll.absence_days }}</td></tr>
+      <tr><th>Heures supplémentaires</th><td>{{ payroll.overtime_hours }}</td></tr>
+      <tr><th>Montant heures supplémentaires</th><td>{{ payroll.overtime_amount }} DA</td></tr>
+      <tr><th>Minutes de retard</th><td>{{ payroll.late_minutes }} min</td></tr>
+      <tr><th>Retenue pour retard</th><td>{{ payroll.late_deduction }} DA</td></tr>
+      <tr><th>Avance / Acompte</th><td>{{ payroll.advance }} DA</td></tr>
+      <tr><th>Statut</th><td>{{ payroll.get_status_display }}</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Primes</h3>
+    <table class="data-table">
+      <tr><td>Prime d'ancienneté</td><td>{{ payroll.seniority_bonus }} DA</td></tr>
+      {% for b in bonuses %}<tr><td>{{ b.get_label_display }}</td><td>{{ b.amount }} DA</td></tr>{% empty %}
+      <tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Aucune prime.</td></tr>{% endfor %}
+    </table>
+    <h3 style="margin-top:18px;">Retenues</h3>
+    <table class="data-table">
+      {% for d in deductions %}<tr><td>{{ d.get_label_display }}</td><td>{{ d.amount }} DA</td></tr>{% empty %}
+      <tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Aucune retenue.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="card" style="text-align:center;">
+  <h3 style="margin-bottom:6px;">Net à payer</h3>
+  <div style="font-size:32px; font-weight:800; color:var(--primary-dark);">{{ payroll.net_pay }} DA</div>
+</div>
+{% endblock %}
